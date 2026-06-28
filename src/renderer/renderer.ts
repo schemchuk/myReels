@@ -1,9 +1,7 @@
-declare global {
-  interface Window {
-    reelsApi: {
-      generateReel(text: string): Promise<string>;
-    };
-  }
+interface Window {
+  reelsApi: {
+    generateReel(text: string): Promise<string>;
+  };
 }
 
 const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
@@ -32,5 +30,3 @@ generateButton.addEventListener('click', () => {
       generateButton.disabled = false;
     });
 });
-
-export {};
