@@ -7,9 +7,16 @@ export interface VideoProcessingOptions {
   inputVideoPath: string;
   musicTrackPath: string;
   outputPath: string;
+  subtitlesPath: string;
+  ctaTextFilePath: string;
+  fontPath: string;
   targetWidth?: number;
   targetHeight?: number;
   musicVolume?: number;
+}
+
+function escapeFfmpegPath(rawPath: string): string {
+  return rawPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
 }
 
 export function buildFfmpegArgs(options: VideoProcessingOptions): string[] {
@@ -17,7 +24,10 @@ export function buildFfmpegArgs(options: VideoProcessingOptions): string[] {
   const height = options.targetHeight ?? 1280;
   const musicVolume = options.musicVolume ?? 0.15;
 
-  const videoFilter = `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`;
+  const scalePad = `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`;
+  const subtitles = `subtitles='${escapeFfmpegPath(options.subtitlesPath)}':force_style='FontName=Arial,FontSize=20,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=160'`;
+  const ctaDrawtext = `drawtext=fontfile='${escapeFfmpegPath(options.fontPath)}':textfile='${escapeFfmpegPath(options.ctaTextFilePath)}':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-70`;
+  const videoFilter = `${scalePad},${subtitles},${ctaDrawtext}`;
   const audioFilter = `[1:a]volume=${musicVolume}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
 
   return [

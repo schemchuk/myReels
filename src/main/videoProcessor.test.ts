@@ -5,11 +5,14 @@ import { buildFfmpegArgs, runFfmpeg } from './videoProcessor';
 jest.mock('child_process');
 
 describe('buildFfmpegArgs', () => {
-  it('builds args that scale/pad to the target dimensions and mix in background music', () => {
+  it('builds args that scale/pad, mix music, burn subtitles, and draw the CTA bar', () => {
     const args = buildFfmpegArgs({
       inputVideoPath: 'raw.mp4',
       musicTrackPath: 'music.mp3',
-      outputPath: 'final.mp4'
+      outputPath: 'final.mp4',
+      subtitlesPath: 'C:/tmp/subs.srt',
+      ctaTextFilePath: 'C:/tmp/cta.txt',
+      fontPath: 'C:/Windows/Fonts/arial.ttf'
     });
 
     expect(args).toEqual([
@@ -17,7 +20,10 @@ describe('buildFfmpegArgs', () => {
       '-i', 'raw.mp4',
       '-i', 'music.mp3',
       '-filter_complex',
-      '[0:v]scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2[vout];[1:a]volume=0.15[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]',
+      "[0:v]scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2," +
+        "subtitles='C\\:/tmp/subs.srt':force_style='FontName=Arial,FontSize=20,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=160'," +
+        "drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':textfile='C\\:/tmp/cta.txt':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-70[vout];" +
+        '[1:a]volume=0.15[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]',
       '-map', '[vout]',
       '-map', '[aout]',
       '-c:v', 'libx264',
@@ -27,19 +33,24 @@ describe('buildFfmpegArgs', () => {
     ]);
   });
 
-  it('respects custom dimensions and music volume', () => {
+  it('respects custom dimensions and music volume while still adding subtitles and CTA', () => {
     const args = buildFfmpegArgs({
       inputVideoPath: 'raw.mp4',
       musicTrackPath: 'music.mp3',
       outputPath: 'final.mp4',
       targetWidth: 1080,
       targetHeight: 1920,
-      musicVolume: 0.3
+      musicVolume: 0.3,
+      subtitlesPath: 'subs.srt',
+      ctaTextFilePath: 'cta.txt',
+      fontPath: 'arial.ttf'
     });
 
-    expect(args).toContain(
-      '[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2[vout];[1:a]volume=0.3[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]'
-    );
+    const filterComplex = args[args.indexOf('-filter_complex') + 1];
+    expect(filterComplex).toContain('scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2');
+    expect(filterComplex).toContain("subtitles='subs.srt'");
+    expect(filterComplex).toContain("textfile='cta.txt'");
+    expect(filterComplex).toContain('[1:a]volume=0.3[bg]');
   });
 });
 
