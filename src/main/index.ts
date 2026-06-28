@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { loadConfig } from './config';
 import { HeyGenClient } from './heygenClient';
-import { processVideo } from './videoProcessor';
+import { processVideo, getVideoDuration, prepareSubtitleAssets } from './videoProcessor';
 import { LocalSavePublisher } from './publisher';
 import { runPipeline } from './pipeline';
 
@@ -36,10 +36,14 @@ app.whenReady().then(() => {
 
     return runPipeline(text, {
       heygenClient,
+      getVideoDuration,
+      prepareSubtitleAssets,
       processVideo,
       publisher,
       tempDir: app.getPath('temp'),
-      musicTrackPath: config.musicTrackPath
+      musicTrackPath: config.musicTrackPath,
+      reelCtaUrl: config.reelCtaUrl,
+      fontPath: config.subtitleFontPath
     });
   });
 });
