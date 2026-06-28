@@ -67,3 +67,54 @@ describe('runFfmpeg', () => {
     await expect(promise).rejects.toThrow('ffmpeg exited with code 1: unrecognized option');
   });
 });
+
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { getVideoDuration, prepareSubtitleAssets } from './videoProcessor';
+
+describe('getVideoDuration', () => {
+  it('parses the duration printed by ffprobe', async () => {
+    const fakeProc: any = new EventEmitter();
+    fakeProc.stdout = new EventEmitter();
+    fakeProc.stderr = new EventEmitter();
+    (spawn as jest.Mock).mockReturnValue(fakeProc);
+
+    const promise = getVideoDuration('raw.mp4');
+    fakeProc.stdout.emit('data', Buffer.from('12.345000\n'));
+    fakeProc.emit('close', 0);
+
+    await expect(promise).resolves.toBeCloseTo(12.345, 3);
+  });
+
+  it('rejects when ffprobe exits with a non-zero code', async () => {
+    const fakeProc: any = new EventEmitter();
+    fakeProc.stdout = new EventEmitter();
+    fakeProc.stderr = new EventEmitter();
+    (spawn as jest.Mock).mockReturnValue(fakeProc);
+
+    const promise = getVideoDuration('raw.mp4');
+    fakeProc.stderr.emit('data', Buffer.from('no such file'));
+    fakeProc.emit('close', 1);
+
+    await expect(promise).rejects.toThrow('ffprobe exited with code 1: no such file');
+  });
+});
+
+describe('prepareSubtitleAssets', () => {
+  it('writes an .srt file and a CTA text file into tempDir', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heygen-subs-'));
+
+    const result = await prepareSubtitleAssets(
+      'Перше речення. Друге речення.',
+      6,
+      'https://jobs.couchhelp.eu/',
+      tempDir
+    );
+
+    expect(fs.existsSync(result.srtPath)).toBe(true);
+    expect(fs.existsSync(result.ctaTextPath)).toBe(true);
+    expect(fs.readFileSync(result.srtPath, 'utf-8')).toContain('Перше речення.');
+    expect(fs.readFileSync(result.ctaTextPath, 'utf-8')).toBe('https://jobs.couchhelp.eu/');
+  });
+});

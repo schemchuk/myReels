@@ -1,4 +1,7 @@
 import { spawn } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import { splitIntoSentences, buildSubtitleSegments, buildSrt } from './subtitles';
 
 export interface VideoProcessingOptions {
   inputVideoPath: string;
@@ -56,4 +59,51 @@ export async function processVideo(
 ): Promise<void> {
   const args = buildFfmpegArgs(options);
   await runFfmpeg(args, ffmpegPath);
+}
+
+export function getVideoDuration(inputPath: string, ffprobePath = 'ffprobe'): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ffprobePath, [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'csv=p=0',
+      inputPath
+    ]);
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    proc.on('error', reject);
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve(parseFloat(stdout.trim()));
+      } else {
+        reject(new Error(`ffprobe exited with code ${code}: ${stderr}`));
+      }
+    });
+  });
+}
+
+export async function prepareSubtitleAssets(
+  text: string,
+  durationSec: number,
+  ctaUrl: string,
+  tempDir: string
+): Promise<{ srtPath: string; ctaTextPath: string }> {
+  const sentences = splitIntoSentences(text);
+  const segments = buildSubtitleSegments(sentences, durationSec);
+  const srt = buildSrt(segments);
+
+  const srtPath = path.join(tempDir, `subtitles-${Date.now()}.srt`);
+  const ctaTextPath = path.join(tempDir, `cta-${Date.now()}.txt`);
+
+  fs.writeFileSync(srtPath, srt, 'utf-8');
+  fs.writeFileSync(ctaTextPath, ctaUrl, 'utf-8');
+
+  return { srtPath, ctaTextPath };
 }
