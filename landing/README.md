@@ -4,15 +4,34 @@
 
 ## Файли
 
-- `index.html` — landing page
-- `qr-code.png` — QR-код для відео (веде на landing з UTM-мітками)
+- `index.template.html` — шаблон landing page
+- `index.html` — згенерована сторінка (комітиться в git, щоб GitHub Pages її бачив)
+- `qr-code.png` — QR-код для відео
 - `follow-up.md` — шаблони follow-up повідомлень
+- `../scripts/build-landing.js` — скрипт генерації `index.html` з `.env`
 
 ## URL landing page
 
 ```
 https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=reels&utm_campaign=pasichnik_58&utm_content=video_1
 ```
+
+## Як згенерувати landing page
+
+Значення беруться з `.env`:
+
+```env
+WHATSAPP_NUMBER=4916091425388
+GOOGLE_FORM_ID=                 # опціонально
+```
+
+Запусти:
+
+```bash
+npm run build:landing
+```
+
+Скрипт підставить WhatsApp номер і, якщо задано, Google Form ID. Якщо `GOOGLE_FORM_ID` порожній — на сторінці буде тільки кнопка WhatsApp.
 
 ## Як задеплоїти на GitHub Pages (безкоштовно)
 
@@ -24,22 +43,17 @@ https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=ree
 6. Через 1-2 хвилини сайт буде доступний за URL:
    `https://schemchuk.github.io/myReels/landing/`
 
-## Що замінити в landing page
+## QR-код в відео
 
-У `index.html` знайди два placeholder'и і заміни на свої:
+QR-код додається автоматично в останні 3 секунди кожного відео, якщо в `.env` задано:
 
-1. **Посилання на Google Form** (для capture email):
-   ```html
-   href="https://docs.google.com/forms/d/e/ВАШ_ІДЕНТИФІКАТОР_ФОРМИ/viewform?usp=pp_url"
-   ```
+```env
+REEL_QR_CODE_PATH=./landing/qr-code.png
+```
 
-2. **WhatsApp номер**:
-   ```html
-   href="https://wa.me/ВАШ_НОМЕР_В_ФОРМАТІ_380XXXXXXXXX?text=..."
-   ```
-   Формат: міжнародний без `+` і пробілів, наприклад `380501234567`.
+Позиція QR: верхній правий кут, 120×120 px.
 
-## Як створити Google Form для capture
+## Як створити Google Form (опціонально)
 
 1. Перейди на https://forms.new
 2. Додай поля:
@@ -47,8 +61,12 @@ https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=ree
    - **WhatsApp номер** (optional) — тип Short answer
    - **Що для вас найскладніше в пошуку роботи?** (optional) — тип Paragraph
 3. Натисни **Send → Link → Shorten URL**.
-4. Скопіюй URL і встав у `index.html` замість placeholder'а.
-5. У налаштуваннях форми увімкни **Collect email addresses** і **Create a spreadsheet** для збору відповідей.
+4. Скопіюй ID форми з URL (частина після `/d/e/` і до `/viewform`).
+5. Додай ID в `.env`:
+   ```env
+   GOOGLE_FORM_ID=1FAIpQLSf...
+   ```
+6. Запусти `npm run build:landing` і закоміть змінений `landing/index.html`.
 
 ## Як використовувати в Instagram Reels
 
@@ -57,15 +75,11 @@ https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=ree
    https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=reels&utm_campaign=pasichnik_58&utm_content=video_1
    ```
 2. У відео CTA кажи: "Посилання в біо".
-3. Додай QR-код `qr-code.png` поверх відео на 2-3 секунди в кінці — це збільшить кількість переходів, бо в Instagram посилання в відео не клікабельне.
+3. QR-код вже вшито в кінці відео автоматично — додатково вставляти його в редакторі не треба.
 
 ## Що відстежувати
 
 - Переходи за UTM в Google Analytics (якщо підключиш GA4 до landing page).
 - Заповнення Google Form.
 - Повідомлення в WhatsApp.
-
-## Пам'ятай
-
-- Цей landing — під **одне відео** та **одну кампанію**.
-- Для наступного відео краще зробити окремий landing або змінити UTM `utm_content=video_2`.
+- Конверсія в ранній доступ.

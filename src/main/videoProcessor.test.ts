@@ -52,6 +52,26 @@ describe('buildFfmpegArgs', () => {
     expect(filterComplex).toContain("textfile='cta.txt'");
     expect(filterComplex).toContain('[1:a]volume=0.3[bg]');
   });
+
+  it('adds a QR code overlay in the last 3 seconds when qrCodePath and videoDuration are provided', () => {
+    const args = buildFfmpegArgs({
+      inputVideoPath: 'raw.mp4',
+      musicTrackPath: 'music.mp3',
+      outputPath: 'final.mp4',
+      subtitlesPath: 'subs.srt',
+      ctaTextFilePath: 'cta.txt',
+      fontPath: 'arial.ttf',
+      qrCodePath: 'qr.png',
+      videoDuration: 15
+    });
+
+    expect(args).toContain('-i');
+    expect(args).toContain('qr.png');
+
+    const filterComplex = args[args.indexOf('-filter_complex') + 1];
+    expect(filterComplex).toContain('[2:v]');
+    expect(filterComplex).toContain("overlay=W-w-24:24:enable='between(t\\,12\\,15)'");
+  });
 });
 
 describe('runFfmpeg', () => {

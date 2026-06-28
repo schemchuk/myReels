@@ -43,7 +43,8 @@ app.whenReady().then(() => {
       tempDir: app.getPath('temp'),
       musicTrackPath: config.musicTrackPath,
       reelCtaUrl: config.reelCtaUrl,
-      fontPath: config.subtitleFontPath
+      fontPath: config.subtitleFontPath,
+      qrCodePath: config.reelQrCodePath
     });
   });
 });

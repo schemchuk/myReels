@@ -8,15 +8,15 @@
 
 ## Ціль
 
-Перетворити глядачів одного відео в лідів (email / WhatsApp) для раннього доступу до SofaSearch.
+Перетворити глядачів одного відео в лідів (WhatsApp / email) для раннього доступу до SofaSearch.
 
 ## Воронка
 
 ```
 Instagram Reels (відео з аватаром)
-  → CTA "Посилання в біо" + QR-код на екрані
+  → CTA "Посилання в біо" + QR-код overlay (останні 3 секунди, автоматично)
   → Landing page: github.io/myReels/landing/?utm_...
-  → Google Form (email) або WhatsApp (wa.me)
+  → WhatsApp (wa.me) або Google Form (email)
   → Ручний follow-up (3 повідомлення)
   → Ранній доступ / демо
 ```
@@ -24,7 +24,9 @@ Instagram Reels (відео з аватаром)
 ## Landing page
 
 - **URL:** `https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=reels&utm_campaign=pasichnik_58&utm_content=video_1`
-- **Файл:** `landing/index.html`
+- **Шаблон:** `landing/index.template.html`
+- **Згенерована сторінка:** `landing/index.html`
+- **Скрипт генерації:** `npm run build:landing`
 - **QR-код:** `landing/qr-code.png`
 - **Інструкція:** `landing/README.md`
 
@@ -37,17 +39,42 @@ Instagram Reels (відео з аватаром)
 | `utm_campaign` | `pasichnik_58` |
 | `utm_content` | `video_1` |
 
+## Автоматизація
+
+### QR-код у відео
+
+Задай в `.env`:
+
+```env
+REEL_QR_CODE_PATH=./landing/qr-code.png
+```
+
+Тоді `processVideo` автоматично додасть QR-код у верхній правий кут на останні 3 секунди.
+
+### Генерація landing page
+
+Значення беруться з `.env`:
+
+```env
+WHATSAPP_NUMBER=4916091425388
+GOOGLE_FORM_ID=                 # опціонально
+```
+
+Запуск:
+
+```bash
+npm run build:landing
+```
+
 ## Що потрібно зробити вручну перед запуском
 
-1. **Замінити Google Form URL** у `landing/index.html`.
-2. **Замінити WhatsApp номер** у `landing/index.html`.
-3. **Задеплоїти** landing page на GitHub Pages (див. `landing/README.md`).
-4. **Поставити посилання в біо Instagram:**
-   ```
-   https://schemchuk.github.io/myReels/landing/?utm_source=instagram&utm_medium=reels&utm_campaign=pasichnik_58&utm_content=video_1
-   ```
-5. **Додати QR-код** у кінець відео на 2-3 секунди.
-6. **Налаштувати Google Form** на збір відповідей у Google Sheets.
+1. **Задеплоїти на GitHub Pages** (3 кліки в налаштуваннях репозиторію).
+2. **Поставити посилання в біо Instagram.**
+3. **Переконатися, що в `.env` задано `REEL_QR_CODE_PATH`.**
+
+Опціонально:
+- Створити Google Form, додати `GOOGLE_FORM_ID` в `.env` і перегенерувати landing.
+- Підключити GA4 до landing page.
 
 ## Follow-up
 
@@ -57,14 +84,14 @@ Instagram Reels (відео з аватаром)
 
 $0. Використовуються тільки безкоштовні інструменти:
 - GitHub Pages
-- Google Forms
+- Google Forms (опціонально)
 - WhatsApp (wa.me)
 - QR-код згенеровано локально
 
 ## Показники для відстеження
 
 - Кількість переглядів відео
-- Кліків за UTM (Google Analytics або Google Sheets)
+- Кліків за UTM
 - Заповнених Google Form
 - Повідомлень у WhatsApp
 - Конверсія в ранній доступ

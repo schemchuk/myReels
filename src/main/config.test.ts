@@ -8,7 +8,8 @@ describe('loadConfig', () => {
       HEYGEN_VOICE_ID: 'voice123',
       OUTPUT_DIR: './output',
       MUSIC_TRACK_PATH: './assets/music.mp3',
-      REEL_CTA_URL: 'https://jobs.couchhelp.eu/'
+      REEL_CTA_URL: 'https://jobs.couchhelp.eu/',
+      REEL_QR_CODE_PATH: './landing/qr-code.png'
     } as NodeJS.ProcessEnv;
 
     const config = loadConfig(env);
@@ -20,6 +21,7 @@ describe('loadConfig', () => {
     expect(config.musicTrackPath.endsWith('music.mp3')).toBe(true);
     expect(config.reelCtaUrl).toBe('https://jobs.couchhelp.eu/');
     expect(config.subtitleFontPath).toBe('C:/Windows/Fonts/arial.ttf');
+    expect(config.reelQrCodePath).toBe('./landing/qr-code.png');
   });
 
   it('uses a custom SUBTITLE_FONT_PATH when provided', () => {

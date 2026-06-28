@@ -8,6 +8,7 @@ export interface AppConfig {
   musicTrackPath: string;
   reelCtaUrl: string;
   subtitleFontPath: string;
+  reelQrCodePath?: string;
 }
 
 const REQUIRED_KEYS = [
@@ -34,6 +35,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     outputDir: path.resolve(env.OUTPUT_DIR as string),
     musicTrackPath: path.resolve(env.MUSIC_TRACK_PATH as string),
     reelCtaUrl: env.REEL_CTA_URL as string,
-    subtitleFontPath: env.SUBTITLE_FONT_PATH ?? DEFAULT_SUBTITLE_FONT_PATH
+    subtitleFontPath: env.SUBTITLE_FONT_PATH ?? DEFAULT_SUBTITLE_FONT_PATH,
+    reelQrCodePath: env.REEL_QR_CODE_PATH
   };
 }

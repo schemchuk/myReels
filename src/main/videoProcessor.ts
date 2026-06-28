@@ -13,6 +13,8 @@ export interface VideoProcessingOptions {
   targetWidth?: number;
   targetHeight?: number;
   musicVolume?: number;
+  qrCodePath?: string;
+  videoDuration?: number;
 }
 
 function escapeFfmpegPath(rawPath: string): string {
@@ -30,11 +32,22 @@ export function buildFfmpegArgs(options: VideoProcessingOptions): string[] {
   const videoFilter = `${scalePad},${subtitles},${ctaDrawtext}`;
   const audioFilter = `[1:a]volume=${musicVolume}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
 
+  const hasQr = options.qrCodePath && options.videoDuration && options.videoDuration > 0;
+  let videoChain: string;
+  if (hasQr) {
+    const start = Math.max(0, options.videoDuration! - 3);
+    const end = options.videoDuration!;
+    videoChain = `${videoFilter}[base];[2:v]format=rgba,scale=120:120[qr];[base][qr]overlay=W-w-24:24:enable='between(t\\,${start}\\,${end})'[vout]`;
+  } else {
+    videoChain = `${videoFilter}[vout]`;
+  }
+
   return [
     '-y',
     '-i', options.inputVideoPath,
     '-i', options.musicTrackPath,
-    '-filter_complex', `[0:v]${videoFilter}[vout];${audioFilter}`,
+    ...(hasQr ? ['-i', options.qrCodePath!] : []),
+    '-filter_complex', `[0:v]${videoChain};${audioFilter}`,
     '-map', '[vout]',
     '-map', '[aout]',
     '-c:v', 'libx264',

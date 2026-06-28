@@ -20,6 +20,8 @@ export interface PipelineDeps {
     subtitlesPath: string;
     ctaTextFilePath: string;
     fontPath: string;
+    videoDuration?: number;
+    qrCodePath?: string;
   }): Promise<void>;
   publisher: {
     publish(finalVideoPath: string): Promise<string>;
@@ -28,6 +30,7 @@ export interface PipelineDeps {
   musicTrackPath: string;
   reelCtaUrl: string;
   fontPath: string;
+  qrCodePath?: string;
 }
 
 export async function runPipeline(text: string, deps: PipelineDeps): Promise<string> {
@@ -52,7 +55,9 @@ export async function runPipeline(text: string, deps: PipelineDeps): Promise<str
     outputPath: processedPath,
     subtitlesPath: srtPath,
     ctaTextFilePath: ctaTextPath,
-    fontPath: deps.fontPath
+    fontPath: deps.fontPath,
+    videoDuration: duration,
+    qrCodePath: deps.qrCodePath
   });
 
   return deps.publisher.publish(processedPath);
