@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import * as fs from 'fs';
 
 export interface HeyGenCredentials {
@@ -21,28 +21,36 @@ export class HeyGenClient {
   constructor(private credentials: HeyGenCredentials) {}
 
   async generateVideo(text: string): Promise<string> {
-    const response = await axios.post(
-      `${BASE_URL}/v2/video/generate`,
-      {
-        video_inputs: [
-          {
-            character: {
-              type: 'avatar',
-              avatar_id: this.credentials.avatarId,
-              avatar_style: 'normal'
-            },
-            voice: {
-              type: 'text',
-              input_text: text,
-              voice_id: this.credentials.voiceId
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/v2/video/generate`,
+        {
+          video_inputs: [
+            {
+              character: {
+                type: 'avatar',
+                avatar_id: this.credentials.avatarId,
+                avatar_style: 'normal'
+              },
+              voice: {
+                type: 'text',
+                input_text: text,
+                voice_id: this.credentials.voiceId
+              }
             }
-          }
-        ],
-        dimension: { width: 720, height: 1280 }
-      },
-      { headers: { 'X-Api-Key': this.credentials.apiKey } }
-    );
-    return response.data.data.video_id;
+          ],
+          dimension: { width: 720, height: 1280 }
+        },
+        { headers: { 'X-Api-Key': this.credentials.apiKey } }
+      );
+      return response.data.data.video_id;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      const responseBody = axiosError.response?.data;
+      throw new Error(
+        `HeyGen video generation failed: ${responseBody ? JSON.stringify(responseBody, null, 2) : axiosError.message}`
+      );
+    }
   }
 
   async checkStatus(videoId: string): Promise<HeyGenStatusResult> {
@@ -77,7 +85,10 @@ export class HeyGenClient {
       }
 
       if (result.status === 'failed') {
-        throw new Error(`HeyGen video generation failed: ${result.error ?? 'unknown error'}`);
+        const errorDetail = result.error && typeof result.error === 'object'
+          ? JSON.stringify(result.error, null, 2)
+          : (result.error ?? 'unknown error');
+        throw new Error(`HeyGen video generation failed: ${errorDetail}`);
       }
 
       if (Date.now() - startedAt > timeoutMs) {
