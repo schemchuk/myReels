@@ -4,7 +4,7 @@
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').mkdirSync('dist/renderer', {recursive: true}); require('fs').copyFileSync('src/renderer/index.html', 'dist/renderer/index.html')\"",
     "start": "npm run build && electron .",
     "test": "jest"
   },
