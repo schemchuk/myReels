@@ -17,6 +17,17 @@ export interface HeyGenStatusResult {
 
 const BASE_URL = 'https://api.heygen.com';
 
+function formatHeyGenError(responseBody: unknown): string {
+  if (responseBody && typeof responseBody === 'object') {
+    const err = responseBody as { code?: string; message?: string };
+    if (err.code === 'MOVIO_PAYMENT_INSUFFICIENT_CREDIT') {
+      return 'Insufficient HeyGen credits. Top up your account at https://app.heygen.com/';
+    }
+    return JSON.stringify(responseBody, null, 2);
+  }
+  return String(responseBody ?? 'unknown error');
+}
+
 export class HeyGenClient {
   constructor(private credentials: HeyGenCredentials) {}
 
@@ -47,9 +58,7 @@ export class HeyGenClient {
     } catch (error) {
       const axiosError = error as AxiosError;
       const responseBody = axiosError.response?.data;
-      throw new Error(
-        `HeyGen video generation failed: ${responseBody ? JSON.stringify(responseBody, null, 2) : axiosError.message}`
-      );
+      throw new Error(`HeyGen video generation failed: ${formatHeyGenError(responseBody ?? axiosError.message)}`);
     }
   }
 
@@ -85,10 +94,7 @@ export class HeyGenClient {
       }
 
       if (result.status === 'failed') {
-        const errorDetail = result.error && typeof result.error === 'object'
-          ? JSON.stringify(result.error, null, 2)
-          : (result.error ?? 'unknown error');
-        throw new Error(`HeyGen video generation failed: ${errorDetail}`);
+        throw new Error(`HeyGen video generation failed: ${formatHeyGenError(result.error)}`);
       }
 
       if (Date.now() - startedAt > timeoutMs) {
