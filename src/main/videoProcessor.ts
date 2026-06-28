@@ -22,13 +22,13 @@ function escapeFfmpegPath(rawPath: string): string {
 }
 
 export function buildFfmpegArgs(options: VideoProcessingOptions): string[] {
-  const width = options.targetWidth ?? 720;
-  const height = options.targetHeight ?? 1280;
+  const width = options.targetWidth ?? 1080;
+  const height = options.targetHeight ?? 1920;
   const musicVolume = options.musicVolume ?? 0.15;
 
   const scalePad = `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`;
-  const subtitles = `subtitles='${escapeFfmpegPath(options.subtitlesPath)}':force_style='FontName=Arial,FontSize=20,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=160'`;
-  const ctaDrawtext = `drawtext=fontfile='${escapeFfmpegPath(options.fontPath)}':textfile='${escapeFfmpegPath(options.ctaTextFilePath)}':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-70`;
+  const subtitles = `subtitles='${escapeFfmpegPath(options.subtitlesPath)}':force_style='FontName=Arial,FontSize=36,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=120,PlayResX=${width},PlayResY=${height}'`;
+  const ctaDrawtext = `drawtext=fontfile='${escapeFfmpegPath(options.fontPath)}':textfile='${escapeFfmpegPath(options.ctaTextFilePath)}':fontcolor=white:fontsize=40:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-100`;
   const videoFilter = `${scalePad},${subtitles},${ctaDrawtext}`;
   const audioFilter = `[1:a]volume=${musicVolume}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
 

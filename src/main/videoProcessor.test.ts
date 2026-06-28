@@ -20,9 +20,9 @@ describe('buildFfmpegArgs', () => {
       '-i', 'raw.mp4',
       '-i', 'music.mp3',
       '-filter_complex',
-      "[0:v]scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2," +
-        "subtitles='C\\:/tmp/subs.srt':force_style='FontName=Arial,FontSize=20,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=160'," +
-        "drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':textfile='C\\:/tmp/cta.txt':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-70[vout];" +
+      "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2," +
+        "subtitles='C\\:/tmp/subs.srt':force_style='FontName=Arial,FontSize=36,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Alignment=2,MarginV=120,PlayResX=1080,PlayResY=1920'," +
+        "drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':textfile='C\\:/tmp/cta.txt':fontcolor=white:fontsize=40:box=1:boxcolor=black@0.6:boxborderw=10:x=(w-text_w)/2:y=h-100[vout];" +
         '[1:a]volume=0.15[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]',
       '-map', '[vout]',
       '-map', '[aout]',
