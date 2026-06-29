@@ -23,6 +23,9 @@ function formatHeyGenError(responseBody: unknown): string {
     if (err.code === 'MOVIO_PAYMENT_INSUFFICIENT_CREDIT') {
       return 'Insufficient HeyGen credits. Top up your account at https://app.heygen.com/';
     }
+    if (err.code === 'invalid_parameter') {
+      return `Invalid HeyGen parameter: ${err.message ?? JSON.stringify(responseBody, null, 2)}`;
+    }
     return JSON.stringify(responseBody, null, 2);
   }
   return String(responseBody ?? 'unknown error');
