@@ -82,9 +82,12 @@ function printList(title, items, formatter) {
 }
 
 async function main() {
-  console.log('Fetching voices...');
+  console.log('Fetching v1 audio voices...');
   const publicVoicesResult = await fetchJson(`${baseURL}/v1/audio/voices`, { type: 'public', limit: 100 });
   const privateVoicesResult = await fetchJson(`${baseURL}/v1/audio/voices`, { type: 'private', limit: 100 });
+
+  console.log('Fetching v3 voices (recommended for /v3/videos)...');
+  const v3VoicesResult = await fetchJson(`${baseURL}/v3/voices`, { type: 'public', limit: 100 });
 
   console.log('Fetching v2 avatars (for /v2/video/generate)...');
   const v2AvatarsResult = await fetchJson(`${baseURL}/v2/avatars`, { limit: 100 });
@@ -94,15 +97,21 @@ async function main() {
 
   const publicVoices = publicVoicesResult.ok ? normalizeVoices(publicVoicesResult.data) : [];
   const privateVoices = privateVoicesResult.ok ? normalizeVoices(privateVoicesResult.data) : [];
+  const v3Voices = v3VoicesResult.ok ? normalizeVoices(v3VoicesResult.data) : [];
   const v2Avatars = v2AvatarsResult.ok ? normalizeV2Avatars(v2AvatarsResult.data) : [];
   const v3Looks = v3LooksResult.ok ? normalizeV3Looks(v3LooksResult.data) : [];
 
-  printList('PUBLIC VOICES (recommended for /v2/video/generate)', publicVoices, (v) => {
+  printList('V3 VOICES -- use these HEYGEN_VOICE_ID for /v3/videos', v3Voices, (v) => {
     const extras = [v.language, v.gender, v.type].filter(Boolean).join(', ');
     return `${v.name}${extras ? ` [${extras}]` : ''} -> ${v.id}`;
   });
 
-  printList('YOUR PRIVATE VOICES (may not work with /v2/video/generate)', privateVoices, (v) => {
+  printList('V1 PUBLIC VOICES (for /v2/video/generate)', publicVoices, (v) => {
+    const extras = [v.language, v.gender, v.type].filter(Boolean).join(', ');
+    return `${v.name}${extras ? ` [${extras}]` : ''} -> ${v.id}`;
+  });
+
+  printList('V1 YOUR PRIVATE VOICES (may not work with API)', privateVoices, (v) => {
     const extras = [v.language, v.gender, v.type].filter(Boolean).join(', ');
     return `${v.name}${extras ? ` [${extras}]` : ''} -> ${v.id}`;
   });
@@ -112,21 +121,21 @@ async function main() {
     return `${a.name}${extras ? ` [${extras}]` : ''} -> ${a.id}`;
   });
 
-  printList('V3 LOOKS -- use these for /v3/videos only', v3Looks, (a) => {
+  printList('V3 LOOKS -- use these HEYGEN_AVATAR_ID for /v3/videos', v3Looks, (a) => {
     const extras = [a.gender, a.groupId].filter(Boolean).join(', ');
     return `${a.name}${extras ? ` [${extras}]` : ''} -> ${a.id}`;
   });
 
   console.log('\n--- DEBUG: raw response shapes ---');
-  if (publicVoicesResult.ok) console.log('Public voices keys:', Object.keys(publicVoicesResult.data || {}));
-  if (privateVoicesResult.ok) console.log('Private voices keys:', Object.keys(privateVoicesResult.data || {}));
+  if (v3VoicesResult.ok) console.log('V3 voices keys:', Object.keys(v3VoicesResult.data || {}));
+  if (publicVoicesResult.ok) console.log('V1 public voices keys:', Object.keys(publicVoicesResult.data || {}));
+  if (privateVoicesResult.ok) console.log('V1 private voices keys:', Object.keys(privateVoicesResult.data || {}));
   if (v2AvatarsResult.ok) console.log('V2 avatars keys:', Object.keys(v2AvatarsResult.data || {}));
   if (v3LooksResult.ok) console.log('V3 looks keys:', Object.keys(v3LooksResult.data || {}));
 
-  console.log('\nFor /v2/video/generate set in .env:');
-  console.log('HEYGEN_VOICE_ID=<id from PUBLIC VOICES>');
-  console.log('HEYGEN_AVATAR_ID=<id from V2 AVATARS>');
-  console.log('\nNOTE: IDs from V3 LOOKS will NOT work with /v2/video/generate.');
+  console.log('\nFor /v3/videos (current) set in .env:');
+  console.log('HEYGEN_VOICE_ID=<id from V3 VOICES>');
+  console.log('HEYGEN_AVATAR_ID=<id from V3 LOOKS>');
 }
 
 main().catch((err) => {
