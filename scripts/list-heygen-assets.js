@@ -60,13 +60,30 @@ function normalizeV3Looks(raw) {
   const list =
     raw.data?.looks ||
     raw.data?.data?.looks ||
+    raw.data?.avatar_list ||
+    raw.data?.data?.avatar_list ||
     (Array.isArray(raw.data) ? raw.data : []) ||
     (Array.isArray(raw.looks) ? raw.looks : []);
   return list.map((a) => ({
     id: a.avatar_id || a.look_id || a.id || 'N/A',
-    name: a.avatar_name || a.name || 'Unnamed',
+    name: a.avatar_name || a.name || a.look_name || 'Unnamed',
     groupId: a.group_id || '',
+    status: a.status || '',
     gender: a.gender || ''
+  }));
+}
+
+function normalizeV3Groups(raw) {
+  if (!raw) return [];
+  const list =
+    raw.data?.groups ||
+    raw.data?.data?.groups ||
+    raw.data?.avatar_groups ||
+    raw.data?.data?.avatar_groups ||
+    (Array.isArray(raw.data) ? raw.data : []);
+  return list.map((g) => ({
+    id: g.group_id || g.id || 'N/A',
+    name: g.avatar_name || g.name || 'Unnamed'
   }));
 }
 
@@ -92,14 +109,35 @@ async function main() {
   console.log('Fetching v2 avatars (for /v2/video/generate)...');
   const v2AvatarsResult = await fetchJson(`${baseURL}/v2/avatars`, { limit: 100 });
 
-  console.log('Fetching v3 looks (for /v3/videos)...');
-  const v3LooksResult = await fetchJson(`${baseURL}/v3/avatars`, { limit: 100 });
+  console.log('Fetching v3 avatar groups...');
+  const v3GroupsResult = await fetchJson(`${baseURL}/v3/avatars`, { limit: 100 });
+
+  console.log('Fetching v3 looks for each group (for /v3/videos)...');
+  const v3LooksFromGroups = [];
+  if (v3GroupsResult.ok) {
+    const groups = normalizeV3Groups(v3GroupsResult.data);
+    for (const group of groups) {
+      if (group.id === 'N/A') continue;
+      const looksResult = await fetchJson(`${baseURL}/v3/avatars/looks`, { group_id: group.id, limit: 100 });
+      if (looksResult.ok) {
+        const looks = normalizeV3Looks(looksResult.data).map((l) => ({ ...l, groupId: group.name || group.id }));
+        v3LooksFromGroups.push(...looks);
+      } else {
+        // Fallback to v2 group endpoint
+        const v2Fallback = await fetchJson(`${baseURL}/v2/avatar_group/${group.id}/avatars`, { limit: 100 });
+        if (v2Fallback.ok) {
+          const looks = normalizeV3Looks(v2Fallback.data).map((l) => ({ ...l, groupId: group.name || group.id }));
+          v3LooksFromGroups.push(...looks);
+        }
+      }
+    }
+  }
 
   const publicVoices = publicVoicesResult.ok ? normalizeVoices(publicVoicesResult.data) : [];
   const privateVoices = privateVoicesResult.ok ? normalizeVoices(privateVoicesResult.data) : [];
   const v3Voices = v3VoicesResult.ok ? normalizeVoices(v3VoicesResult.data) : [];
   const v2Avatars = v2AvatarsResult.ok ? normalizeV2Avatars(v2AvatarsResult.data) : [];
-  const v3Looks = v3LooksResult.ok ? normalizeV3Looks(v3LooksResult.data) : [];
+  const v3Looks = v3LooksFromGroups;
 
   printList('V3 VOICES -- use these HEYGEN_VOICE_ID for /v3/videos', v3Voices, (v) => {
     const extras = [v.language, v.gender, v.type].filter(Boolean).join(', ');
@@ -131,7 +169,7 @@ async function main() {
   if (publicVoicesResult.ok) console.log('V1 public voices keys:', Object.keys(publicVoicesResult.data || {}));
   if (privateVoicesResult.ok) console.log('V1 private voices keys:', Object.keys(privateVoicesResult.data || {}));
   if (v2AvatarsResult.ok) console.log('V2 avatars keys:', Object.keys(v2AvatarsResult.data || {}));
-  if (v3LooksResult.ok) console.log('V3 looks keys:', Object.keys(v3LooksResult.data || {}));
+  if (v3GroupsResult.ok) console.log('V3 groups keys:', Object.keys(v3GroupsResult.data || {}));
 
   console.log('\nFor /v3/videos (current) set in .env:');
   console.log('HEYGEN_VOICE_ID=<id from V3 VOICES>');
