@@ -11,7 +11,7 @@ describe('HeyGenClient', () => {
 
   it('generateVideo returns the video_id from the response', async () => {
     nock(BASE_URL)
-      .post('/v2/video/generate')
+      .post('/v3/videos')
       .reply(200, { data: { video_id: 'vid_123' } });
 
     const client = new HeyGenClient(credentials);
@@ -22,8 +22,7 @@ describe('HeyGenClient', () => {
 
   it('checkStatus returns parsed status fields', async () => {
     nock(BASE_URL)
-      .get('/v1/video_status.get')
-      .query({ video_id: 'vid_123' })
+      .get('/v3/videos/vid_123')
       .reply(200, { data: { status: 'completed', video_url: 'https://cdn.heygen.com/vid_123.mp4' } });
 
     const client = new HeyGenClient(credentials);
@@ -38,11 +37,9 @@ describe('HeyGenClient', () => {
 
   it('pollUntilComplete resolves with the video URL once status is completed', async () => {
     nock(BASE_URL)
-      .get('/v1/video_status.get')
-      .query({ video_id: 'vid_123' })
+      .get('/v3/videos/vid_123')
       .reply(200, { data: { status: 'processing' } })
-      .get('/v1/video_status.get')
-      .query({ video_id: 'vid_123' })
+      .get('/v3/videos/vid_123')
       .reply(200, { data: { status: 'completed', video_url: 'https://cdn.heygen.com/vid_123.mp4' } });
 
     const client = new HeyGenClient(credentials);
@@ -53,9 +50,8 @@ describe('HeyGenClient', () => {
 
   it('pollUntilComplete throws when HeyGen reports failed status', async () => {
     nock(BASE_URL)
-      .get('/v1/video_status.get')
-      .query({ video_id: 'vid_123' })
-      .reply(200, { data: { status: 'failed', error: 'avatar render error' } });
+      .get('/v3/videos/vid_123')
+      .reply(200, { data: { status: 'failed', failure_message: 'avatar render error' } });
 
     const client = new HeyGenClient(credentials);
 
@@ -66,8 +62,7 @@ describe('HeyGenClient', () => {
 
   it('pollUntilComplete throws after the timeout elapses', async () => {
     nock(BASE_URL)
-      .get('/v1/video_status.get')
-      .query({ video_id: 'vid_123' })
+      .get('/v3/videos/vid_123')
       .times(5)
       .reply(200, { data: { status: 'processing' } });
 

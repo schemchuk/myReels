@@ -26,6 +26,9 @@ function formatHeyGenError(responseBody: unknown): string {
     if (err.code === 'invalid_parameter') {
       return `Invalid HeyGen parameter: ${err.message ?? JSON.stringify(responseBody, null, 2)}`;
     }
+    if (err.code === 'internal_error') {
+      return `HeyGen internal error: ${err.message ?? JSON.stringify(responseBody, null, 2)}`;
+    }
     return JSON.stringify(responseBody, null, 2);
   }
   return String(responseBody ?? 'unknown error');
@@ -37,25 +40,16 @@ export class HeyGenClient {
   async generateVideo(text: string): Promise<string> {
     try {
       const response = await axios.post(
-        `${BASE_URL}/v2/video/generate`,
+        `${BASE_URL}/v3/videos`,
         {
-          video_inputs: [
-            {
-              character: {
-                type: 'avatar',
-                avatar_id: this.credentials.avatarId,
-                avatar_style: 'normal'
-              },
-              voice: {
-                type: 'text',
-                input_text: text,
-                voice_id: this.credentials.voiceId
-              }
-            }
-          ],
-          dimension: { width: 720, height: 1280 }
+          type: 'avatar',
+          avatar_id: this.credentials.avatarId,
+          script: text,
+          voice_id: this.credentials.voiceId,
+          resolution: '1080p',
+          aspect_ratio: '9:16'
         },
-        { headers: { 'X-Api-Key': this.credentials.apiKey } }
+        { headers: { 'X-Api-Key': this.credentials.apiKey, 'Content-Type': 'application/json' } }
       );
       return response.data.data.video_id;
     } catch (error) {
@@ -66,15 +60,14 @@ export class HeyGenClient {
   }
 
   async checkStatus(videoId: string): Promise<HeyGenStatusResult> {
-    const response = await axios.get(`${BASE_URL}/v1/video_status.get`, {
-      params: { video_id: videoId },
+    const response = await axios.get(`${BASE_URL}/v3/videos/${videoId}`, {
       headers: { 'X-Api-Key': this.credentials.apiKey }
     });
     const data = response.data.data;
     return {
       status: data.status,
       videoUrl: data.video_url,
-      error: data.error
+      error: data.failure_message ?? data.error
     };
   }
 
